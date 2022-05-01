@@ -6,7 +6,7 @@ namespace CCTU.UIFramework
 {
     public interface IUIEvent
     {
-        public int Priority
+        int Priority
         {
             get;
         }
