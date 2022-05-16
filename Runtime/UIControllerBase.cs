@@ -1,34 +1,47 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CCTU.UIFramework
 {
 	public abstract class UIControllerBase : IUIState
 	{
+		#region private-field
+		private SemaphoreSlim _semaphore = new SemaphoreSlim(1);
+		#endregion private-field
+
 		#region public-method
-		public virtual Task OnEnter()
+		public async Task OnEnter()
 		{
-			return Task.CompletedTask;
+			await _semaphore.WaitAsync();
+			await OnEnterHandler();
+			_semaphore.Release();
 		}
 
-		public virtual Task OnPause()
+		public async Task OnPause()
 		{
-			return Task.CompletedTask;
+			await _semaphore.WaitAsync();
+			await OnPauseHandler();
+			_semaphore.Release();
 		}
 
-		public virtual Task OnResume()
+		public async Task OnResume()
 		{
-			return Task.CompletedTask;
+			await _semaphore.WaitAsync();
+			await OnResumeHandler();
+			_semaphore.Release();
 		}
 
-		public virtual Task OnExit()
+		public async Task OnExit()
 		{
-			return Task.CompletedTask;
+			await _semaphore.WaitAsync();
+			await OnExitHandler();
+			_semaphore.Release();
 		}
 
-		public virtual Task HandleUIEvent(IUIEvent uiEvent)
+		public Task HandleUIEvent(IUIEvent uiEvent)
 		{
 			return Task.CompletedTask;
 		}
@@ -37,5 +50,27 @@ namespace CCTU.UIFramework
 		{
 		}
 		#endregion public-method
+
+		#region protected-method
+		protected virtual Task OnEnterHandler()
+		{
+			return Task.CompletedTask;
+		}
+
+		protected virtual Task OnPauseHandler()
+		{
+			return Task.CompletedTask;
+		}
+
+		protected virtual Task OnResumeHandler()
+		{
+			return Task.CompletedTask;
+		}
+
+		protected virtual Task OnExitHandler()
+		{
+			return Task.CompletedTask;
+		}
+		#endregion protected-method
 	}
 }
