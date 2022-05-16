@@ -28,8 +28,8 @@ namespace CCTU.UIFramework
 
 		#endregion private-field
 
-		#region private-property
-		private UIControllerBase Top
+		#region public-property
+		public UIControllerBase Top
 		{
 			get
 			{
@@ -43,10 +43,10 @@ namespace CCTU.UIFramework
 				}
 			}
 		}
-		#endregion private-property
+		#endregion public-property
 
 		#region public-method
-		public async Task Push(UIControllerBase controller)
+		public void Push(UIControllerBase controller)
 		{
 			var hasKey = false;
 			UIControllerNode node;
@@ -57,10 +57,6 @@ namespace CCTU.UIFramework
 			var oldTop = Top;
 			if (hasKey)
 			{
-				if (Top != null && Top != controller)
-				{
-					await Top.OnPause();
-				}
 				lock (_lockQueue)
 				{
 					_uiQueue.UpdatePriority(node, _priotity--);
@@ -68,28 +64,16 @@ namespace CCTU.UIFramework
 			}
 			else
 			{
-				if (Top != null)
+				node = new UIControllerNode(controller);
+				_nodeDict[controller] = node;
+				lock (_lockQueue)
 				{
-					await Top.OnPause();
-				}
-				{
-					node = new UIControllerNode(controller);
-					_nodeDict[controller] = node;
-					lock (_lockQueue)
-					{
-						_uiQueue.Enqueue(node, _priotity--);
-					}
+					_uiQueue.Enqueue(node, _priotity--);
 				}
 			}
-
-			if (oldTop != Top)
-			{
-				await Top.OnEnter();
-			}
-			await Top.OnResume();
 		}
 
-		public async Task Pop(UIControllerBase controller)
+		public void Pop(UIControllerBase controller)
 		{
 			var hasKey = false;
 			UIControllerNode node;
@@ -99,15 +83,6 @@ namespace CCTU.UIFramework
 			}
 			if (hasKey)
 			{
-				if (Top == controller)
-				{
-					await Top.OnPause();
-					await Top.OnExit();
-				}
-				else
-				{
-					await controller.OnExit();
-				}
 				lock (_lockQueue)
 				{
 					_uiQueue.Remove(node);
@@ -116,11 +91,12 @@ namespace CCTU.UIFramework
 				{
 					_nodeDict.Remove(controller);
 				}
-				if (Top != null)
-				{
-					await Top.OnResume();
-				}
 			}
+		}
+
+		public bool HasUnit(UIControllerBase uIController) 
+		{
+			return _nodeDict.ContainsKey(uIController);
 		}
 		#endregion public-method
 	}

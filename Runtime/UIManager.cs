@@ -25,6 +25,11 @@ namespace CCTU.UIFramework
 		#region public-method
 		public UIManager()
 		{
+			_uiHeaps = new UIHeap[_heapTypeCount];
+			for (var i = 0; i < _heapTypeCount; ++i) 
+			{
+				_uiHeaps[i] = new UIHeap();
+			}
 		}
 
 		public void Init()
@@ -49,6 +54,9 @@ namespace CCTU.UIFramework
 
 		public async Task PushUI(int uiType, UIControllerBase uiController)
 		{
+			var oldTops = GetTops().ToList();
+			var wasInHeap = IsInHeap(uiController);
+			var hadInTop = oldTops.Any(c => c == uiController);
 			var bits = (uint)uiType;
 			var index = 0;
 			var tasks = new List<Task>();
@@ -56,40 +64,80 @@ namespace CCTU.UIFramework
 			{
 				if ((bits & 1) != 0)
 				{
-					if (_uiHeaps[index] == null)
-					{
-						_uiHeaps[index] = new UIHeap();
-					}
-					tasks.Add(_uiHeaps[index].Push(uiController));
+					_uiHeaps[index].Push(uiController);
 				}
 				++index;
 				bits = bits >> 1;
 			}
+			var newTops = GetTops().ToList();
+			var needPause = oldTops.Where(u => !newTops.Contains(u)).ToList();
+
+			foreach (var pausedController in needPause) 
+			{
+				tasks.Add(pausedController.OnPause());
+			}
 			await Task.WhenAll(tasks);
+
+			if (!wasInHeap)
+			{
+				await uiController.OnEnter();
+				await uiController.OnResume();
+			}
+			else if (!hadInTop)
+			{
+				await uiController.OnResume();
+			}
 		}
 
 		public async Task PopUI(int uiType, UIControllerBase uiController)
 		{
+			var oldTops = GetTops().ToList();
 			var bits = (uint)uiType;
 			var index = 0;
-			var tasks = new List<Task>();
 			while (bits != 0)
 			{
 				if ((bits & 1) != 0)
 				{
-					if (_uiHeaps[index] != null)
-					{
-						tasks.Add(_uiHeaps[index].Pop(uiController));
-					}
+					_uiHeaps[index].Pop(uiController);
 				}
 				++index;
 				bits = bits >> 1;
 			}
+			var newTops = GetTops().ToList();
+			var needResume = newTops.Where(u => !oldTops.Contains(u)).ToList();
+
+			if (oldTops.Contains(uiController))
+			{
+				await uiController.OnPause();
+				await uiController.OnExit();
+			}
+
+			var tasks = new List<Task>();
+			foreach (var pausedController in needResume)
+			{
+				tasks.Add(pausedController.OnResume());
+			}
 			await Task.WhenAll(tasks);
+
 		}
 		#endregion public-method
 
 		#region private-method
+
+		private bool IsInHeap(UIControllerBase uiController)
+		{
+			return (from heap in _uiHeaps
+					where heap.HasUnit(uiController)
+					select heap).Any();
+		}
+
+		private IEnumerable<UIControllerBase> GetTops() 
+		{
+			return (from heap in _uiHeaps
+					where heap.Top != null
+					select heap.Top).Distinct();
+		}
+
 		private void InitUIControllers()
 		{
 			var type = typeof(UIControllerBase);
