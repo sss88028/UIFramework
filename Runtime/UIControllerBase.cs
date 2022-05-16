@@ -41,7 +41,7 @@ namespace CCTU.UIFramework
 			_semaphore.Release();
 		}
 
-		public Task HandleUIEvent(IUIEvent uiEvent)
+		public virtual Task HandleUIEvent(IUIEvent uiEvent)
 		{
 			return Task.CompletedTask;
 		}
