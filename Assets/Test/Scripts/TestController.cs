@@ -20,29 +20,31 @@ public class TestController : UIControllerBase
 	{
 		UIManager.Instance.PopUI(type, this);
 	}
-
-	public override Task OnEnter()
-	{
-		Debug.Log($"[TestController.OnEnter] {Name}");
-		return base.OnEnter();
-	}
-
-	public override Task OnPause()
-	{
-		Debug.Log($"[TestController.OnPause] {Name}");
-		return Task.CompletedTask;
-	}
-
-	public override Task OnResume()
-	{
-		Debug.Log($"[TestController.OnResume] {Name}");
-		return Task.CompletedTask;
-	}
-
-	public override Task OnExit()
-	{
-		Debug.Log($"[TestController.OnExit] {Name}");
-		return Task.CompletedTask;
-	}
 	#endregion public-method
+
+	#region protected-method
+	protected override Task OnEnterHandler()
+	{
+		Debug.Log($"[TestController.OnEnterHandler] {Name}");
+		return base.OnEnterHandler();
+	}
+
+	protected override Task OnPauseHandler()
+	{
+		Debug.Log($"[TestController.OnPauseHandler] {Name}");
+		return base.OnPauseHandler();
+	}
+
+	protected override Task OnResumeHandler()
+	{
+		Debug.Log($"[TestController.OnResumeHandler] {Name}");
+		return base.OnResumeHandler();
+	}
+
+	protected override Task OnExitHandler()
+	{
+		Debug.Log($"[TestController.OnResumeHandler] {Name}");
+		return base.OnExitHandler();
+	}
+	#endregion protected-method
 }
